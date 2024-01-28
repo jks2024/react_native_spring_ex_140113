@@ -30,8 +30,8 @@ public class MemberController {
         return ResponseEntity.ok(memberDto);
     }
     // 회원 수정
-    @GetMapping("/modify")
-    public ResponseEntity<Boolean> memberModify(MemberDto memberDto) {
+    @PutMapping("/modify")
+    public ResponseEntity<Boolean> memberModify(@RequestBody MemberDto memberDto) {
         log.info("memberDto: {}", memberDto.getEmail());
         boolean isTrue = memberService.modifyMember(memberDto);
         return ResponseEntity.ok(isTrue);
