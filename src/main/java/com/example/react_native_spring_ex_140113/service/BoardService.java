@@ -3,15 +3,19 @@ package com.example.react_native_spring_ex_140113.service;
 import com.example.react_native_spring_ex_140113.dto.BoardDto;
 import com.example.react_native_spring_ex_140113.entity.Board;
 import com.example.react_native_spring_ex_140113.entity.Category;
+import com.example.react_native_spring_ex_140113.entity.Location;
 import com.example.react_native_spring_ex_140113.entity.Member;
 import com.example.react_native_spring_ex_140113.repository.BoardRepository;
 import com.example.react_native_spring_ex_140113.repository.CategoryRepository;
+import com.example.react_native_spring_ex_140113.repository.LocationRepository;
 import com.example.react_native_spring_ex_140113.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +26,9 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
+    private final LocationRepository locationRepository;
     // 게시글 등록
+    @Transactional
     public boolean saveBoard(BoardDto boardDto) {
         try {
             Board board = new Board();
@@ -39,13 +45,22 @@ public class BoardService {
             board.setContent(boardDto.getContent());
             board.setImgPath(boardDto.getImg());
             board.setMember(member);
-            boardRepository.save(board);
+            Board savedBoard = boardRepository.save(board);
+
+            Location location = new Location();
+            location.setBoard(savedBoard);
+            location.setAddress(boardDto.getAddress());
+            location.setLatitude(boardDto.getLatitude());
+            location.setLongitude(boardDto.getLongitude());
+            locationRepository.save(location);
+
             return true;
         } catch (Exception e) {
             log.info("Error occurred during saveBoard: {}", e.getMessage(), e);
             return false;
         }
     }
+
     // 게시글 전체 조회
     public List<BoardDto> getBoardList() {
         List<Board> boards = boardRepository.findAll();
@@ -129,6 +144,13 @@ public class BoardService {
         boardDto.setImg(board.getImgPath());
         boardDto.setEmail(board.getMember().getEmail());
         boardDto.setRegDate(board.getRegDate());
+
+        Location location = board.getLocation(); // Board 엔티티에 Location 엔티티에 대한 참조가 필요
+        if (location != null) { // Location 정보가 있는 경우에만 설정
+            boardDto.setAddress(location.getAddress());
+            boardDto.setLatitude(location.getLatitude());
+            boardDto.setLongitude(location.getLongitude());
+        }
         return boardDto;
     }
 
