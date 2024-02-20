@@ -31,32 +31,13 @@ public class BoardService {
     @Transactional
     public boolean saveBoard(BoardDto boardDto) {
         try {
-            Board board = new Board();
-
-            Member member = memberRepository.findByEmail(boardDto.getEmail()).orElseThrow(
-                    () -> new RuntimeException("해당 회원이 존재하지 않습니다.")
-            );
-
-            Category category = categoryRepository.findById(boardDto.getCategoryId()).orElseThrow(
-                    () -> new RuntimeException("해당 카테고리가 존재하지 않습니다.")
-            );
-            board.setTitle(boardDto.getTitle());
-            board.setCategory(category);
-            board.setContent(boardDto.getContent());
-            board.setImgPath(boardDto.getImg());
-            board.setMember(member);
+            Board board = createBoardFromDto(boardDto);
             Board savedBoard = boardRepository.save(board);
-
-            Location location = new Location();
-            location.setBoard(savedBoard);
-            location.setAddress(boardDto.getAddress());
-            location.setLatitude(boardDto.getLatitude());
-            location.setLongitude(boardDto.getLongitude());
+            Location location = createLocationFromDto(boardDto, savedBoard);
             locationRepository.save(location);
-
             return true;
         } catch (Exception e) {
-            log.info("Error occurred during saveBoard: {}", e.getMessage(), e);
+            log.error("Error occurred during saveBoard: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -152,6 +133,33 @@ public class BoardService {
             boardDto.setLongitude(location.getLongitude());
         }
         return boardDto;
+    }
+
+    private Board createBoardFromDto(BoardDto boardDto) {
+        Member member = memberRepository.findByEmail(boardDto.getEmail()).orElseThrow(
+                () -> new RuntimeException("해당 회원이 존재하지 않습니다.")
+        );
+
+        Category category = categoryRepository.findById(boardDto.getCategoryId()).orElseThrow(
+                () -> new RuntimeException("해당 카테고리가 존재하지 않습니다.")
+        );
+
+        Board board = new Board();
+        board.setTitle(boardDto.getTitle());
+        board.setContent(boardDto.getContent());
+        board.setImgPath(boardDto.getImg());
+        board.setMember(member);
+        board.setCategory(category);
+        return board;
+    }
+
+    private Location createLocationFromDto(BoardDto boardDto, Board board) {
+        Location location = new Location();
+        location.setBoard(board);
+        location.setAddress(boardDto.getAddress());
+        location.setLatitude(boardDto.getLatitude());
+        location.setLongitude(boardDto.getLongitude());
+        return location;
     }
 
 }
